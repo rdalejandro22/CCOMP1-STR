@@ -111,15 +111,11 @@ void orden(struct node *lista, int n)
         if(n<=actual->val){
         prev->next=nuevo;
         nuevo->next=actual;
-        break;
-        if(n>prev->val)
-        {
-            prev->next=nuevo;
-        }
-        }
+        break;}
         prev=actual;
         actual=actual->next;
     }
+    prev -> next = nuevo;
     imprimir(lista);
 }
 main()
@@ -148,5 +144,5 @@ main()
     cat(head,head2,6);
     printf("-------");
 
-    orden(head2,6);
+    orden(head2,10);
 }
