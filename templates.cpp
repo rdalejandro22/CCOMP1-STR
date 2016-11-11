@@ -12,12 +12,11 @@ public:
     Graph(const vector <int> &starts, const vector <int> &ends)
     {
         if(starts.size()!=ends.size())
-            throw std::invalid_argument("Pn");
+            throw std::invalid_argument("no son del mismo tamanio");
         for(int i = 0; i<starts.size();i++)
         {
             //int start = starts[i], end = ends[i];
             adyacentes[starts[i]].push_back(ends[i]);
-            adyacentes[ends[i]];
         }
     }
     int numOutgoing(const int nodeID)
@@ -28,7 +27,17 @@ public:
     {
         map <int,vector<int> >::iterator it;
         it = adyacentes.find(nodeID);
-        return it->second;
+        return (*it).second;
+    }
+    int numOutgoing(const int nodeID)
+    {
+        return adjacent(nodeID);
+    }
+    const int &adjacent(const int nodeID)
+    {
+        map <int,vector<int> >::iterator it;
+        it = adyacentes.find(nodeID);
+        return (*it).first;
     }
 };
 template <typename T>
