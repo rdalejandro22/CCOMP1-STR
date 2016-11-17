@@ -1,102 +1,191 @@
-#include <iostream>
-#include <windows.h>
 #include "miniwin.h"
+#include <cstdlib>
+#include <time.h>
+/*
 
+    cuadrado ||||   pivote = (0,0)
+             ||||   extremos = (1,0),(0,1),(1,1)
+    letra s  ||||   pivote = (0,0)
+             ||||   extremos = (1,0),(-1,1),(0,1)
+    s invert ||||   pivote = (0,0)
+             ||||   extremos = (0,1),(1,1),(-1,0)
+    letra l  ||||   pivote = (0,0)
+             ||||   extremos = (0,-1),(0,1),(1,1)
+    l invert ||||   pivote = (0,0)
+             ||||   extremos = (0,-1),(0,1),(-1,1)
+    largo    ||||   pivote = (0,0)
+             ||||   extremos = (0,-1),(0,1),(0,2)
+*/
 using namespace miniwin;
-int main(){
-    vredimensiona(250,500);
-}
-/*char mapa[10][20] = {
-"###################",
-"#                 #",
-"#                 #",
-"#                 #",
-"#                 #",
-"#                 #",
-"#                 #",
-"#                 #",
-"#                 #",
-"###################"
-};
-char mapa2[10][20] = {
-"###################",
-"#                 #",
-"#                 #",
-"#                 #",
-"#                 #",
-"#                 #",
-"#                 #",
-"#                 #",
-"#                 #",
-"###################"
-};
-char pieza = '@';
-bool ejecucion = true;
-int x = 9;
-int y = 1;
-void reiniciar(){
-    x = 9;
-    y = 1;
-}
-int filallena = 0;
-int main()
+const int TAM = 25;
+const int FILAS = 20;
+const int COLUMNAS = 10;
+class Coordenadas
 {
+public:
+    int x, y;
+};
+class Pieza
+{
+public:
+    Coordenadas pivote;
+    Coordenadas extremos[3];
+    int color;
+    Coordenadas posicion(int n) const {
+        Coordenadas temp = {pivote.x, pivote.y};
+        if(n != 0){
+            temp.x += extremos[n-1].x;
+            temp.y += extremos[n-1].y;
+        }
+    return temp;
+    }  //extremos
 
-    while(ejecucion==true)
-    {
-        if (filallena==16){
-            int i = 8;
-            for (i;i>1;i--){
-                mapa[i][x]=mapa[i-1][x];}
-        }
-        system("cls");
-        for(int visualizar=0; visualizar<10;visualizar++){
-            cout << mapa[visualizar] << endl;}
-        mapa[y][x]=pieza;
-        system("pause>nul");
-        if(GetAsyncKeyState(VK_DOWN)){
-            int y2 = y+1;
-            if(mapa[y2][x] != '#'){
-                if(mapa[y2][x]=='@'){
-                    mapa[y][x]=='@';
-                    reiniciar();
-                }
-                if(y2==8){
-                    mapa[y][x] = ' ';
-                    y++;
-                    mapa[y][x] = '@';
-                    reiniciar();
-                    filallena++;
-                }
-                else
-                    mapa[y][x] = ' ';
-                    y++;
-                    mapa[y][x] = pieza;
-            }
-        }
-        if(GetAsyncKeyState(VK_RIGHT)){
-            int x2 = x+1;
-            if(mapa[y][x2] != '#'){
-                mapa[y][x] = ' ';
-                x++;
-                mapa[y][x] = pieza;
-            }
-        }
-        if(GetAsyncKeyState(VK_LEFT)){
-            int x2 = x-1;
-            if(mapa[y][x2] != '#'){
-                mapa[y][x] = ' ';
-                x--;
-                mapa[y][x] = pieza;
-            }
-        }
-        if(GetAsyncKeyState(VK_ESCAPE)){
-            ejecucion=false;
+};
+
+/*struct Coordenadas
+{
+    int x, y;
+};
+struct Pieza
+{
+    Coordenadas pivote;
+    Coordenadas extremos[3];
+};*/
+typedef int Tablero[COLUMNAS][FILAS];
+void cuadrado(int x, int y){
+    rectangulo_lleno(1 + x * TAM,
+                     1 + y * TAM,
+                     x * TAM + TAM,
+                     y * TAM + TAM);
+}
+void crear_Pieza(Pieza &P){
+    color(P.color);
+    for(int i = 0; i < 4; i++){
+        Coordenadas c = P.posicion(i);
+        cuadrado(c.x, c.y);
+    }
+}
+Coordenadas rotar_derecha(const Coordenadas &c){
+    Coordenadas temp = {-c.y, c.x};
+    return temp;
+}
+Coordenadas rotar_izquierda(const Coordenadas &c){
+    Coordenadas temp = {c.y, -c.x};
+    return temp;
+}
+void rotar_derecha(Pieza &P){
+    for(int i = 0; i < 3; i++){
+        P.extremos[i] = rotar_derecha(P.extremos[i]);
+    }
+}
+void rotar_izquierda(Pieza &P){
+    for(int i = 0; i < 3; i++){
+        P.extremos[i] = rotar_izquierda(P.extremos[i]);
+    }
+}
+void tablero_vacio(Tablero &T){
+    for(int i=0; i < COLUMNAS; i++){
+        for(int j=0; j < FILAS; j++){
+            T[i][j] = NEGRO; //Casilla vacia
         }
     }
+}
+void tablero_lleno(const Tablero &T){
+    for(int i=0; i < COLUMNAS; i++){
+        for(int j=0; j < FILAS; j++){
+            color(T[i][j]); //Casilla vacia
+            cuadrado(i, j);
+        }
+    }
+}
+void tablero_fijar(Tablero &T, const Pieza &P){
+    for(int i = 0; i < 4; i++){
+        Coordenadas c = P.posicion(i);
+        T[c.x][c.y] = P.color;
+    }
+}
+bool tablero_conflicto(const Tablero &T, const Pieza &P){
+    for(int i = 0; i < 4; i++){
+        Coordenadas c = P.posicion(i);
+        if(c.x < 0 || c.x >= COLUMNAS){
+            return true;}
+        if(c.y < 0 || c.y >= FILAS){
+            return true;}
+        if(T[c.x][c.y] != NEGRO){
+            return true;}
+    }
+    return false;
+}
+Coordenadas extremos[6][3] = {
+    {{1,0},{0,1},{1,1}},
+    {{1,0},{-1,1},{0,1}},
+    {{0,1},{1,1},{-1,0}},
+    {{0,1},{0,-1},{1,1}},
+    {{0,1},{0,-1},{-1,1}},
+    {{0,1},{0,-1},{0,2}},
+};
+void pieza_nueva(Pieza &P){
+    P.pivote.x = 5;
+    P.pivote.y = 1;
+    P.color = 1 + rand()%6;
+    int pieza_aleatoria = rand() % 6;
+    for(int i = 0; i < 3; i++){
+        P.extremos[i] = extremos[pieza_aleatoria][i];
+    }
+}
+bool tablero_filallena(Tablero &T, int fila){
+        for(int i = 0; i < COLUMNAS; i++){
+            if(T[i][fila] == NEGRO)
+                return false;
+        }
+}
+int main()
+{
+    vredimensiona(TAM*COLUMNAS,TAM*FILAS);
+    srand(time(NULL));
 
-    system("cls");
-    cout << "GAME OVER";
-    return 0;
-}*/
+    Tablero T;
+    tablero_vacio(T);
+    Pieza n;
+    pieza_nueva(n);
+    crear_Pieza(n);
+    refresca();
+
+    T[0][19] = VERDE;
+    T[1][19] = AMARILLO;
+    T[5][19] = CYAN;
+    T[4][13] = AZUL;
+
+    int t = tecla();
+    while(t != ESCAPE){
+        Pieza copia = n;
+        if(t == ABAJO){
+            n.pivote.y++;
+        }
+        if(t == ARRIBA){
+            rotar_derecha(n);
+        }
+        if(t == IZQUIERDA){
+            n.pivote.x--;
+        }
+        if(t == DERECHA){
+            n.pivote.x++;
+        }
+        if(tablero_conflicto(T,n)){
+            n = copia;
+        }
+        if(t == ESPACIO){
+            tablero_fijar(T, n);
+            pieza_nueva(n);
+        }
+        if(t != NINGUNA){
+            borra();
+            tablero_lleno(T);
+            crear_Pieza(n);
+            refresca();
+        }
+        t = tecla();
+    }
+    vcierra();
+}
 
